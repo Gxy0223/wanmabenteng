@@ -1,50 +1,30 @@
 // ==========================================
-// online-rank.js - 在线排行榜 (GitHub API)
+// online-rank.js - 在线排行榜 (JSONBlob)
 // ==========================================
 class OnlineLeaderboard {
     constructor() {
-        this.owner = 'Gxy0223';
-        this.repo = 'wanmabenteng';
-        this.path = 'leaderboard.json';
-        this.branch = 'main';
-
-        // Token (obfuscated to avoid auto-revocation)
-        this._p = [
-            'xYzeJ16VFY64AGD7W8ZGSXuDkXadk',
-            'l9QAoW1IJQa048VYq4fDPZIo7oygfI',
-            '_M9LuZAo6Cduy0QL4XM6B11_tap_buhtig'
-        ];
+        this.blobId = '019c60e0-8ef9-7afa-a507-9cd948130d13';
+        this.apiUrl = `https://jsonblob.com/api/jsonBlob/${this.blobId}`;
 
         this.rankings = [];
         this.loading = false;
         this.lastFetch = 0;
     }
 
-    _t() {
-        return this._p.join('').split('').reverse().join('');
-    }
-
     async fetchRankings(force) {
-        if (!force && Date.now() - this.lastFetch < 30000 && this.rankings.length > 0) {
+        if (!force && Date.now() - this.lastFetch < 15000 && this.rankings.length > 0) {
             return this.rankings;
         }
 
         this.loading = true;
         try {
-            const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${this.path}?ref=${this.branch}`;
-            const resp = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${this._t()}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
+            const resp = await fetch(this.apiUrl, {
+                headers: { 'Accept': 'application/json' }
             });
 
             if (resp.ok) {
                 const data = await resp.json();
-                const raw = atob(data.content.replace(/\n/g, ''));
-                const content = decodeURIComponent(escape(raw));
-                const parsed = JSON.parse(content);
-                this.rankings = parsed.rankings || [];
+                this.rankings = data.rankings || [];
                 this.lastFetch = Date.now();
             }
         } catch (e) {
@@ -56,26 +36,15 @@ class OnlineLeaderboard {
 
     async submitScore(name, score, distance) {
         try {
-            const token = this._t();
-            const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${this.path}?ref=${this.branch}`;
-            const headers = {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            };
+            // 先读取最新数据
+            const getResp = await fetch(this.apiUrl, {
+                headers: { 'Accept': 'application/json' }
+            });
 
-            // 读取当前文件（需要SHA）
-            const getResp = await fetch(url, { headers });
             let rankings = [];
-            let sha = null;
-
             if (getResp.ok) {
                 const data = await getResp.json();
-                sha = data.sha;
-                const raw = atob(data.content.replace(/\n/g, ''));
-                const content = decodeURIComponent(escape(raw));
-                const parsed = JSON.parse(content);
-                rankings = parsed.rankings || [];
+                rankings = data.rankings || [];
             }
 
             // 同名只保留最高分
@@ -98,21 +67,11 @@ class OnlineLeaderboard {
             rankings.sort((a, b) => b.score - a.score);
             if (rankings.length > 50) rankings.length = 50;
 
-            // 写回文件
-            const newContent = JSON.stringify({ rankings }, null, 2);
-            const encoded = btoa(unescape(encodeURIComponent(newContent)));
-
-            const putBody = {
-                message: `score: ${name} ${score}`,
-                content: encoded,
-                branch: this.branch
-            };
-            if (sha) putBody.sha = sha;
-
-            const putResp = await fetch(url, {
+            // 写回
+            const putResp = await fetch(this.apiUrl, {
                 method: 'PUT',
-                headers: headers,
-                body: JSON.stringify(putBody)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rankings })
             });
 
             if (putResp.ok) {
