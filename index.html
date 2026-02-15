@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>万马奔腾 - 马年贺岁网页游戏</title>
+    <meta name="description" content="马年贺岁横版跑酷网页游戏，收集红包福字，躲避年兽障碍！">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="loading">
+            万马奔腾
+            <div class="loader"></div>
+            <div style="font-size: 14px; color: rgba(255,215,0,0.6);">加载中...</div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <button id="fullscreen-btn" title="全屏">⛶ 全屏</button>
+        <!-- 名字输入覆盖层 -->
+        <div id="name-input-overlay">
+            <div id="name-input-box">
+                <h2>输入你的名字</h2>
+                <div class="subtitle">支持汉字或字母，最多6位</div>
+                <input type="text" id="player-name-input" maxlength="6" placeholder="请输入名字" autocomplete="off">
+                <div class="error-msg" id="name-error"></div>
+                <div class="btn-row">
+                    <button class="secondary" id="name-cancel-btn">返回</button>
+                    <button class="primary" id="name-confirm-btn">开始游戏</button>
+                </div>
+            </div>
+        </div>
+        <div id="footer">万马奔腾 © 马年贺岁</div>
+    </div>
+
+    <!-- 游戏脚本 (按依赖顺序加载) -->
+    <script src="js/storage.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/scene.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/obstacle.js"></script>
+    <script src="js/collectible.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+    <script>
+        // 隐藏加载画面
+        window.addEventListener('DOMContentLoaded', () => {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                setTimeout(() => {
+                    loading.style.transition = 'opacity 0.5s';
+                    loading.style.opacity = '0';
+                    setTimeout(() => loading.style.display = 'none', 500);
+                }, 300);
+            }
+        });
+
+        // 全屏切换
+        document.getElementById('fullscreen-btn').addEventListener('click', () => {
+            const container = document.getElementById('game-container');
+            if (!document.fullscreenElement) {
+                container.requestFullscreen?.() || container.webkitRequestFullscreen?.();
+            } else {
+                document.exitFullscreen?.() || document.webkitExitFullscreen?.();
+            }
+        });
+    </script>
+</body>
+</html>
