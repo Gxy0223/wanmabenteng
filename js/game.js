@@ -25,6 +25,7 @@ class Game {
         // 玩家信息
         this.playerName = window.GameStorage.getPlayerName() || '';
         this.currentRank = 0; // 本局排名
+        this.onlineRankings = null; // 在线排行榜缓存
 
         // 初始化子系统
         this.scene = new window.Scene(this.canvas);
@@ -177,8 +178,7 @@ class Game {
             // 排行榜按钮
             if (this.ui.rankBtnY && this.ui.isClickOnButton(x, y, cx, this.ui.rankBtnY, 180, 42)) {
                 window.GameAudio.click();
-                this.state = 'ranking';
-                this.currentRank = 0;
+                this.enterRanking('menu');
                 return;
             }
 
@@ -210,8 +210,7 @@ class Game {
                 // 排行榜
                 if (this.ui.goRankBtnY && this.ui.isClickOnButton(x, y, cx - 85, this.ui.goRankBtnY, 120, 36)) {
                     window.GameAudio.click();
-                    this._rankReturnState = 'gameOver';
-                    this.state = 'ranking';
+                    this.enterRanking('gameOver');
                     return;
                 }
                 // 返回主页
@@ -278,8 +277,7 @@ class Game {
             const cx = this.BASE_W / 2;
             if (this.ui.rankBtnY && this.ui.isClickOnButton(x, y, cx, this.ui.rankBtnY, 180, 42)) {
                 window.GameAudio.click();
-                this.state = 'ranking';
-                this.currentRank = 0;
+                this.enterRanking('menu');
                 return;
             }
             window.GameAudio.click();
@@ -313,8 +311,7 @@ class Game {
                 }
                 if (this.ui.goRankBtnY && this.ui.isClickOnButton(x, y, cx - 85, this.ui.goRankBtnY, 120, 36)) {
                     window.GameAudio.click();
-                    this._rankReturnState = 'gameOver';
-                    this.state = 'ranking';
+                    this.enterRanking('gameOver');
                     return;
                 }
                 if (this.ui.homeBtnY && this.ui.isClickOnButton(x, y, cx + 85, this.ui.homeBtnY, 120, 36)) {
@@ -429,6 +426,15 @@ class Game {
         } else {
             this.showNameInput();
         }
+    }
+
+    enterRanking(returnState) {
+        this.state = 'ranking';
+        this._rankReturnState = returnState || 'menu';
+        this.onlineRankings = null;
+        window.OnlineLeaderboard.fetchRankings(true).then(rankings => {
+            this.onlineRankings = rankings;
+        });
     }
 
     goToMenu() {
@@ -573,9 +579,18 @@ class Game {
         this.isNewRecord = window.GameStorage.setHighScore(this.score);
         window.GameStorage.addToTotalScore(this.score);
 
-        // 保存排名
+        // 本地排名
         if (this.playerName && this.score > 0) {
             this.currentRank = window.GameStorage.addRanking(this.playerName, this.score, this.distance);
+        }
+
+        // 在线排名（异步）
+        if (this.playerName && this.score > 0) {
+            window.OnlineLeaderboard.submitScore(this.playerName, this.score, this.distance).then(rank => {
+                if (rank > 0) {
+                    this.currentRank = rank;
+                }
+            });
         }
 
         if (this.isNewRecord) {
@@ -643,7 +658,9 @@ class Game {
             case 'ranking':
                 this.scene.update(1, 0);
                 this.ui.renderStartScreen();
-                this.ui.renderRanking(window.GameStorage.getRankings(), this.currentRank);
+                const rankData = this.onlineRankings || window.GameStorage.getRankings();
+                const isOnlineLoading = window.OnlineLeaderboard.loading && !this.onlineRankings;
+                this.ui.renderRanking(rankData, this.currentRank, isOnlineLoading);
                 break;
         }
     }

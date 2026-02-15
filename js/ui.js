@@ -422,7 +422,7 @@ class UI {
     }
 
     // === 排行榜画面 ===
-    renderRanking(rankings, currentRank) {
+    renderRanking(rankings, currentRank, isLoading) {
         const ctx = this.ctx;
         const W = this.W;
         const H = this.H;
@@ -445,7 +445,20 @@ class UI {
         // 标题
         ctx.fillStyle = '#FFD700';
         ctx.font = 'bold 26px serif';
-        ctx.fillText('排行榜', W / 2, py + 35);
+        ctx.fillText('在线排行榜', W / 2, py + 35);
+
+        // 加载提示
+        if (isLoading) {
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = '14px Arial';
+            ctx.fillText('加载中...', W / 2, H / 2);
+            // 返回按钮
+            this.rankBackBtnY = py + ph - 32;
+            this.drawButton(ctx, W / 2, this.rankBackBtnY, 140, 38, '返回', '#555555', '#FFFFFF');
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
+            return;
+        }
 
         // 表头
         const tableTop = py + 58;
