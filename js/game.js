@@ -113,7 +113,7 @@ class Game {
         if (this.state === 'menu') {
             window.GameAudio.init();
             window.GameAudio.click();
-            this.showNameInput();
+            this.tryStartGame();
             return;
         }
 
@@ -184,7 +184,7 @@ class Game {
 
             // 开始按钮或其它区域
             window.GameAudio.click();
-            this.showNameInput();
+            this.tryStartGame();
             return;
         }
 
@@ -283,7 +283,7 @@ class Game {
                 return;
             }
             window.GameAudio.click();
-            this.showNameInput();
+            this.tryStartGame();
             return;
         }
 
@@ -369,6 +369,15 @@ class Game {
     }
 
     // === 名字输入 ===
+    tryStartGame() {
+        // 已有名字，直接开始；否则弹出输入框
+        if (this.playerName) {
+            this.startGame();
+        } else {
+            this.showNameInput();
+        }
+    }
+
     showNameInput() {
         this.state = 'nameInput';
         this.nameOverlay.classList.add('active');

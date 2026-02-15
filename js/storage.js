@@ -98,18 +98,28 @@ class Storage {
 
     addRanking(name, score, distance) {
         const rankings = this.getRankings();
-        rankings.push({
-            name: name,
-            score: score,
-            distance: Math.floor(distance),
-            date: new Date().toLocaleDateString('zh-CN')
-        });
+        // 同名玩家只保留最高分
+        const existing = rankings.find(r => r.name === name);
+        if (existing) {
+            if (score > existing.score) {
+                existing.score = score;
+                existing.distance = Math.floor(distance);
+                existing.date = new Date().toLocaleDateString('zh-CN');
+            }
+        } else {
+            rankings.push({
+                name: name,
+                score: score,
+                distance: Math.floor(distance),
+                date: new Date().toLocaleDateString('zh-CN')
+            });
+        }
         // 按分数降序排列，只保留前20名
         rankings.sort((a, b) => b.score - a.score);
         if (rankings.length > 20) rankings.length = 20;
         this.set('rankings', rankings);
         // 返回当前排名
-        return rankings.findIndex(r => r.score === score && r.name === name) + 1;
+        return rankings.findIndex(r => r.name === name) + 1;
     }
 
     clearRankings() {
