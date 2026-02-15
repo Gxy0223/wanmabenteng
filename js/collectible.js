@@ -122,8 +122,8 @@ class CollectibleManager {
             x: this.W + 30 + Math.random() * 100,
             y: y,
             baseY: y,
-            w: 25,
-            h: 25,
+            w: 32,
+            h: 32,
             type: typeKey,
             score: typeDef.score,
             color: typeDef.color,
@@ -189,12 +189,18 @@ class CollectibleManager {
             ctx.restore();
         });
 
-        // 渲染浮动文字
+        // 渲染浮动文字 - 更大更醒目
         this.floatingTexts.forEach(t => {
-            ctx.fillStyle = t.color;
-            ctx.globalAlpha = t.life / 40;
-            ctx.font = 'bold 16px Arial';
+            const alpha = t.life / 40;
+            ctx.globalAlpha = alpha;
+            // 文字描边
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.font = 'bold 18px Arial';
             ctx.textAlign = 'center';
+            ctx.strokeText(t.text, t.x, t.y);
+            // 文字填充
+            ctx.fillStyle = t.color;
             ctx.fillText(t.text, t.x, t.y);
         });
         ctx.globalAlpha = 1;
@@ -204,173 +210,247 @@ class CollectibleManager {
     // === 绘制收集物 ===
 
     drawRedPacket(ctx, x, y, item) {
-        // 红包
-        const w = 22, h = 28;
-        ctx.fillStyle = '#CC0000';
-        this.roundRect(ctx, x, y, w, h, 3);
+        const w = 28, h = 34;
+        const cx = x + w / 2, cy = y + h / 2;
+
+        // 外发光
+        const glow = 0.2 + Math.sin(item.animTimer * 0.1) * 0.12;
+        const glowGrad = ctx.createRadialGradient(cx, cy, 5, cx, cy, 28);
+        glowGrad.addColorStop(0, `rgba(255,215,0,${glow})`);
+        glowGrad.addColorStop(1, 'rgba(255,215,0,0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 28, 0, Math.PI * 2);
         ctx.fill();
 
-        // 金边
-        ctx.strokeStyle = '#FFD700';
-        ctx.lineWidth = 1.5;
-        this.roundRect(ctx, x, y, w, h, 3);
-        ctx.stroke();
-
-        // 封口
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath();
-        ctx.arc(x + w / 2, y + h * 0.35, 6, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 福字
-        ctx.fillStyle = '#CC0000';
-        ctx.font = 'bold 8px serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('¥', x + w / 2, y + h * 0.4);
-        ctx.textAlign = 'left';
-
-        // 发光
-        ctx.fillStyle = `rgba(255,215,0,${0.15 + Math.sin(item.animTimer * 0.1) * 0.1})`;
-        ctx.beginPath();
-        ctx.arc(x + w / 2, y + h / 2, 18, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    drawFu(ctx, x, y, item) {
-        const s = 24;
-        // 红色菱形底
-        ctx.save();
-        ctx.translate(x + s / 2, y + s / 2);
-        ctx.rotate(Math.PI / 4);
-        ctx.fillStyle = '#CC0000';
-        ctx.fillRect(-s / 2.5, -s / 2.5, s / 1.25, s / 1.25);
-        ctx.strokeStyle = '#FFD700';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(-s / 2.5, -s / 2.5, s / 1.25, s / 1.25);
-        ctx.restore();
-
-        // 福字
-        ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 14px serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('福', x + s / 2, y + s / 2 + 1);
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'alphabetic';
-
-        // 发光
-        ctx.fillStyle = `rgba(255,0,0,${0.1 + Math.sin(item.animTimer * 0.08) * 0.08})`;
-        ctx.beginPath();
-        ctx.arc(x + s / 2, y + s / 2, 18, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    drawSmallFirecracker(ctx, x, y, item) {
-        const w = 8, h = 20;
-        const cx = x + 10;
-        // 鞭炮
-        ctx.fillStyle = '#CC0000';
-        ctx.fillRect(cx, y + 5, w, h);
-        ctx.fillStyle = '#FFD700';
-        ctx.fillRect(cx, y + 5, w, 3);
-        ctx.fillRect(cx, y + 22, w, 3);
-
-        // 引线
-        ctx.strokeStyle = '#666';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(cx + w / 2, y + 5);
-        ctx.quadraticCurveTo(cx + w / 2 + 5, y, cx + w / 2, y - 2);
-        ctx.stroke();
-
-        // 火花
-        const spark = Math.sin(item.animTimer * 0.2) * 3;
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath();
-        ctx.arc(cx + w / 2, y - 2, 2 + spark * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    drawGoldIngot(ctx, x, y, item) {
-        const w = 28, h = 18;
-        // 元宝形状（船形）
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath();
-        ctx.moveTo(x + 4, y + h);
-        ctx.lineTo(x, y + h * 0.5);
-        ctx.quadraticCurveTo(x + w * 0.2, y, x + w * 0.35, y + h * 0.2);
-        ctx.quadraticCurveTo(x + w * 0.5, y + h * 0.35, x + w * 0.65, y + h * 0.2);
-        ctx.quadraticCurveTo(x + w * 0.8, y, x + w, y + h * 0.5);
-        ctx.lineTo(x + w - 4, y + h);
-        ctx.closePath();
-        ctx.fill();
-
-        // 高光
-        ctx.fillStyle = 'rgba(255,255,220,0.5)';
-        ctx.beginPath();
-        ctx.ellipse(x + w / 2, y + h * 0.35, w * 0.2, h * 0.2, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 底部阴影线
-        ctx.strokeStyle = '#DAA520';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x + 6, y + h - 2);
-        ctx.lineTo(x + w - 6, y + h - 2);
-        ctx.stroke();
-
-        // 金光
-        ctx.fillStyle = `rgba(255,215,0,${0.2 + Math.sin(item.animTimer * 0.12) * 0.15})`;
-        ctx.beginPath();
-        ctx.arc(x + w / 2, y + h / 2, 20, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    drawZodiac(ctx, x, y, item) {
-        const r = 13;
-        const cx = x + r;
-        const cy = y + r;
-
-        // 外圈
-        const glow = Math.sin(item.animTimer * 0.08);
-        ctx.fillStyle = `rgba(255,0,255,${0.2 + glow * 0.15})`;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r + 8, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 令牌底
-        ctx.fillStyle = '#8B4513';
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        // 红包体
+        const grad = ctx.createLinearGradient(x, y, x, y + h);
+        grad.addColorStop(0, '#EE1111');
+        grad.addColorStop(1, '#BB0000');
+        ctx.fillStyle = grad;
+        this.roundRect(ctx, x, y, w, h, 4);
         ctx.fill();
 
         // 金边
         ctx.strokeStyle = '#FFD700';
         ctx.lineWidth = 2;
+        this.roundRect(ctx, x, y, w, h, 4);
+        ctx.stroke();
+
+        // 封口圆
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(cx, y + h * 0.35, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // ¥符号
+        ctx.fillStyle = '#CC0000';
+        ctx.font = 'bold 10px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('¥', cx, y + h * 0.4);
+        ctx.textAlign = 'left';
+    }
+
+    drawFu(ctx, x, y, item) {
+        const s = 30;
+        const cx = x + s / 2, cy = y + s / 2;
+
+        // 外发光
+        const glow = 0.2 + Math.sin(item.animTimer * 0.08) * 0.12;
+        const glowGrad = ctx.createRadialGradient(cx, cy, 5, cx, cy, 28);
+        glowGrad.addColorStop(0, `rgba(255,50,0,${glow})`);
+        glowGrad.addColorStop(1, 'rgba(255,0,0,0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 28, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 红色菱形底
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(Math.PI / 4);
+        const boxSize = s / 2.3;
+        const grad = ctx.createLinearGradient(-boxSize, -boxSize, boxSize, boxSize);
+        grad.addColorStop(0, '#EE0000');
+        grad.addColorStop(1, '#BB0000');
+        ctx.fillStyle = grad;
+        ctx.fillRect(-boxSize, -boxSize, boxSize * 2, boxSize * 2);
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-boxSize, -boxSize, boxSize * 2, boxSize * 2);
+        ctx.restore();
+
+        // 福字 - 更大
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 17px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#FF8800';
+        ctx.shadowBlur = 4;
+        ctx.fillText('福', cx, cy + 1);
+        ctx.shadowBlur = 0;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+    }
+
+    drawSmallFirecracker(ctx, x, y, item) {
+        const w = 12, h = 24;
+        const fx = x + 10;
+        const cy = y + h / 2 + 3;
+
+        // 外发光
+        const glow = 0.15 + Math.sin(item.animTimer * 0.12) * 0.1;
+        ctx.fillStyle = `rgba(255,100,0,${glow})`;
+        ctx.beginPath();
+        ctx.arc(fx + w / 2, cy, 22, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 鞭炮体
+        const grad = ctx.createLinearGradient(fx, y + 3, fx + w, y + 3);
+        grad.addColorStop(0, '#DD0000');
+        grad.addColorStop(0.5, '#FF2222');
+        grad.addColorStop(1, '#DD0000');
+        ctx.fillStyle = grad;
+        ctx.fillRect(fx, y + 3, w, h);
+
+        // 金色装饰
+        ctx.fillStyle = '#FFD700';
+        ctx.fillRect(fx, y + 3, w, 4);
+        ctx.fillRect(fx, y + 3 + h - 4, w, 4);
+        ctx.fillRect(fx, y + 3 + h / 2 - 1, w, 3);
+
+        // 轮廓
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(fx, y + 3, w, h);
+
+        // 引线
+        ctx.strokeStyle = '#888';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(fx + w / 2, y + 3);
+        ctx.quadraticCurveTo(fx + w / 2 + 6, y - 3, fx + w / 2, y - 5);
+        ctx.stroke();
+
+        // 火花 - 更明亮
+        const spark = Math.sin(item.animTimer * 0.2) * 2;
+        ctx.fillStyle = '#FFFF00';
+        ctx.beginPath();
+        ctx.arc(fx + w / 2, y - 5, 3 + spark, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#FF8800';
+        ctx.beginPath();
+        ctx.arc(fx + w / 2, y - 5, 5 + spark, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    drawGoldIngot(ctx, x, y, item) {
+        const w = 34, h = 22;
+        const cx = x + w / 2, cy = y + h / 2;
+
+        // 强烈金光
+        const glow = 0.25 + Math.sin(item.animTimer * 0.12) * 0.15;
+        const glowGrad = ctx.createRadialGradient(cx, cy, 5, cx, cy, 30);
+        glowGrad.addColorStop(0, `rgba(255,215,0,${glow})`);
+        glowGrad.addColorStop(0.5, `rgba(255,180,0,${glow * 0.5})`);
+        glowGrad.addColorStop(1, 'rgba(255,215,0,0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 元宝形状（船形）- 更大
+        const ingotGrad = ctx.createLinearGradient(x, y, x, y + h);
+        ingotGrad.addColorStop(0, '#FFE44D');
+        ingotGrad.addColorStop(0.4, '#FFD700');
+        ingotGrad.addColorStop(1, '#DAA520');
+        ctx.fillStyle = ingotGrad;
+        ctx.beginPath();
+        ctx.moveTo(x + 4, y + h);
+        ctx.lineTo(x - 1, y + h * 0.45);
+        ctx.quadraticCurveTo(x + w * 0.2, y - 2, x + w * 0.35, y + h * 0.18);
+        ctx.quadraticCurveTo(x + w * 0.5, y + h * 0.32, x + w * 0.65, y + h * 0.18);
+        ctx.quadraticCurveTo(x + w * 0.8, y - 2, x + w + 1, y + h * 0.45);
+        ctx.lineTo(x + w - 4, y + h);
+        ctx.closePath();
+        ctx.fill();
+
+        // 金色轮廓
+        ctx.strokeStyle = '#FFE44D';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 高光
+        ctx.fillStyle = 'rgba(255,255,230,0.6)';
+        ctx.beginPath();
+        ctx.ellipse(cx, y + h * 0.3, w * 0.2, h * 0.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 底部高光线
+        ctx.strokeStyle = 'rgba(255,255,200,0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x + 8, y + h - 3);
+        ctx.lineTo(x + w - 8, y + h - 3);
+        ctx.stroke();
+    }
+
+    drawZodiac(ctx, x, y, item) {
+        const r = 16;
+        const cx = x + r;
+        const cy = y + r;
+
+        // 强力外发光 - 彩虹色脉冲
+        const glow = Math.sin(item.animTimer * 0.08);
+        const glowGrad = ctx.createRadialGradient(cx, cy, r, cx, cy, r + 18);
+        glowGrad.addColorStop(0, `rgba(255,0,255,${0.3 + glow * 0.2})`);
+        glowGrad.addColorStop(0.5, `rgba(255,100,255,${0.15 + glow * 0.1})`);
+        glowGrad.addColorStop(1, 'rgba(255,0,255,0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r + 18, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 令牌底 - 渐变
+        const tokenGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, r);
+        tokenGrad.addColorStop(0, '#A0622D');
+        tokenGrad.addColorStop(1, '#6B3A1F');
+        ctx.fillStyle = tokenGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 金边 - 更粗
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.arc(cx, cy, r - 3, 0, Math.PI * 2);
+        ctx.arc(cx, cy, r - 4, 0, Math.PI * 2);
         ctx.stroke();
 
-        // 马字
+        // 马字 - 更大
         ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 12px serif';
+        ctx.font = 'bold 15px serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#FF8800';
+        ctx.shadowBlur = 4;
         ctx.fillText('马', cx, cy + 1);
+        ctx.shadowBlur = 0;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'alphabetic';
 
-        // 旋转光效
+        // 旋转光效 - 更多射线
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(item.animTimer * 0.05);
-        for (let i = 0; i < 4; i++) {
-            ctx.rotate(Math.PI / 2);
-            ctx.fillStyle = 'rgba(255,215,0,0.3)';
-            ctx.fillRect(-1, r + 2, 2, 4);
+        for (let i = 0; i < 6; i++) {
+            ctx.rotate(Math.PI / 3);
+            ctx.fillStyle = `rgba(255,215,0,${0.4 + glow * 0.2})`;
+            ctx.fillRect(-1.5, r + 2, 3, 6);
         }
         ctx.restore();
     }
@@ -494,17 +574,20 @@ class CollectibleManager {
     }
 
     drawItemGlow(ctx, cx, cy, color, item) {
-        const glow = 0.15 + Math.sin(item.animTimer * 0.1) * 0.1;
-        ctx.fillStyle = color.replace(')', `,${glow})`).replace('rgb', 'rgba');
-        if (!color.startsWith('rgba')) {
-            // 简单方式
-            ctx.globalAlpha = glow;
-            ctx.fillStyle = color;
-        }
+        const glow = 0.25 + Math.sin(item.animTimer * 0.1) * 0.15;
+        // 径向渐变光晕
+        ctx.save();
+        ctx.globalAlpha = glow;
+        const grad = ctx.createRadialGradient(cx, cy, 3, cx, cy, 26);
+        grad.addColorStop(0, color);
+        grad.addColorStop(0.5, color);
+        grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 26, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1;
+        ctx.restore();
     }
 
     roundRect(ctx, x, y, w, h, r) {
